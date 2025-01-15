@@ -1,0 +1,33 @@
+{
+  "name": "barbV1",
+  "timestamp": "2024-01-15",
+  "description": "Primeira versão estável do sistema de agendamento da barbearia",
+  "features": [
+    "Sistema de autenticação",
+    "Agendamento com verificação de disponibilidade",
+    "Modal de confirmação",
+    "Seleção de data por botões",
+    "Horários indisponíveis bloqueados",
+    "Interface responsiva"
+  ],
+  "components": {
+    "Booking": "src/components/Booking.tsx",
+    "AuthModal": "src/components/auth/AuthModal.tsx",
+    "Header": "src/components/Header.tsx",
+    "Hero": "src/components/Hero.tsx",
+    "Services": "src/components/Services.tsx",
+    "Gallery": "src/components/Gallery.tsx",
+    "About": "src/components/About.tsx",
+    "Testimonials": "src/components/Testimonials.tsx",
+    "Footer": "src/components/Footer.tsx"
+  },
+  "database": {
+    "tables": [
+      "profiles",
+      "barbers",
+      "services",
+      "schedules",
+      "appointments"
+    ]
+  }
+}
