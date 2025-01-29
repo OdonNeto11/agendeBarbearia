@@ -102,7 +102,8 @@ const Booking = ({ onBookingSuccess }: BookingProps) => {
     }
   };
 
-  const isTimeSlotAvailable = (time: string): boolean => {
+  
+  const isTimeSlotAvailable = (time: string): boolean => { // Verifica se um horário específico está disponível para agendamento.
     if (!selectedService) return false;
 
     const [hours, minutes] = time.split(':').map(Number);
@@ -124,26 +125,49 @@ const Booking = ({ onBookingSuccess }: BookingProps) => {
     });
   };
 
+
+  // Gera os horários disponíveis para agendamento com base no horário de funcionamento da barbearia.
   const getTimeSlots = () => {
-    if (!selectedService) return [];
-    
+    if (!selectedService || !formData.date) return []; // Verifica se há uma data selecionada
+  
     const timeSlots: string[] = [];
-    const selectedDate = new Date(formData.date);
-    const isSaturday = selectedDate.getDay() === 6;
-    
-    const endHour = isSaturday ? 16 : 22;
-    
-    for (let hour = 8; hour < endHour; hour++) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+  
+    // Extrai o ano, mês e dia da string formData.date (formato yyyy-MM-dd)
+    const [year, month, day] = formData.date.split('-').map(Number);
+  
+    // Cria a data no horário local
+    const selectedDate = new Date(year, month - 1, day); // month - 1 porque os meses são indexados a partir de 0
+  
+    // Verifica se a data é válida
+    if (isNaN(selectedDate.getTime())) {
+      console.error("Data inválida:", formData.date);
+      return [];
+    }
+  
+    const isSaturday = selectedDate.getDay() === 6; // Verifica se é sábado usando o horário local
+  
+    console.log("Data selecionada:", selectedDate.toLocaleDateString()); // Exibe a data selecionada no formato local
+    console.log("É sábado?", isSaturday); // Exibe se é sábado
+  
+    // Define o horário de término com base no dia da semana
+    const endHour = isSaturday ? 16 : 22; // Sábado até 16h, outros dias até 22h
+    console.log("Horário de término:", endHour); // Exibe o horário de término
+  
+    // Gera os horários disponíveis
+    for (let hour = 8; hour <= endHour; hour++) {
+      timeSlots.push(`${hour.toString().padStart(2, '0')}:00`); // Horário cheio (ex: 08:00)
       if (hour < endHour - 1) {
-        timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
+        timeSlots.push(`${hour.toString().padStart(2, '0')}:30`); // Meia hora (ex: 08:30)
       }
     }
-    
+  
+    console.log("Horários disponíveis:", timeSlots); // Exibe os horários gerados
     return timeSlots;
   };
 
-  const isDateAvailable = (date: Date): boolean => {
+
+  
+  const isDateAvailable = (date: Date): boolean => { // Verifica se uma data está disponível para agendamento.
     const dayOfWeek = date.getDay();
     return dayOfWeek >= 1 && dayOfWeek <= 6;
   };
@@ -214,12 +238,12 @@ const Booking = ({ onBookingSuccess }: BookingProps) => {
     }
   };
 
-  const getAvailableDates = () => {
+  const getAvailableDates = () => { // Retorna as datas disponíveis para agendamento (próximos 15 dias, excluindo domingos).
     const dates: Date[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 30; i++) {
       const date = addDays(today, i);
       if (isDateAvailable(date)) {
         dates.push(date);
@@ -326,38 +350,44 @@ const Booking = ({ onBookingSuccess }: BookingProps) => {
                 </div>
               )}
 
-              {formData.date && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Horário *</label>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                    {timeSlots.map((time) => {
-                      const isAvailable = isTimeSlotAvailable(time);
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          disabled={!isAvailable}
-                          className={`p-2 rounded-md text-center transition-colors ${
-                            formData.time === time
-                              ? 'bg-amber-500 text-black font-medium'
-                              : isAvailable
-                              ? 'bg-zinc-800 hover:bg-zinc-700'
-                              : 'bg-zinc-900 text-zinc-600 cursor-not-allowed opacity-50'
-                          }`}
-                          onClick={() => isAvailable && setFormData({ ...formData, time })}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {timeSlots.length === 0 && (
-                    <p className="text-red-500 mt-2">
-                      Não há horários disponíveis para esta data.
-                    </p>
-                  )}
-                </div>
-              )}
+{formData.date && (
+  <div>
+    <label className="block text-sm font-medium mb-2">Horário *</label>
+    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+    {timeSlots.map((time) => {
+  const isAvailable = isTimeSlotAvailable(time);
+  console.log(`Horário: ${time}, Disponível: ${isAvailable}, Classes: ${formData.time === time
+    ? 'bg-amber-500 text-black font-medium'
+    : isAvailable
+    ? 'bg-zinc-800 hover:bg-zinc-700'
+    : 'bg-zinc-900 text-zinc-600 cursor-not-allowed opacity-50'
+  }`); // Log das classes CSS
+  return (
+    <button
+      key={time}
+      type="button"
+      disabled={!isAvailable}
+      className={`p-2 rounded-md text-center transition-colors ${
+        formData.time === time
+          ? 'bg-amber-500 text-black font-medium'
+          : isAvailable
+          ? 'bg-zinc-800 hover:bg-zinc-700'
+          : 'bg-zinc-900 text-zinc-600 cursor-not-allowed opacity-50'
+      }`}
+      onClick={() => isAvailable && setFormData({ ...formData, time })}
+    >
+      {time}
+    </button>
+  );
+})}
+    </div>
+    {timeSlots.length === 0 && (
+      <p className="text-red-500 mt-2">
+        Não há horários disponíveis para esta data.
+      </p>
+    )}
+  </div>
+)}
 
               <button
                 type="submit"
