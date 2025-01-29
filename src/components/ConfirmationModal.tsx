@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Calendar, Clock, User } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns'; // Adicionamos isValid para validação
 import { ptBR } from 'date-fns/locale';
 
 interface ConfirmationModalProps {
@@ -9,7 +9,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   barberName: string;
   serviceName: string;
-  date: string;
+  date: string; // A data é recebida como string
   time: string;
   price: number;
 }
@@ -24,9 +24,41 @@ const ConfirmationModal = ({
   time,
   price,
 }: ConfirmationModalProps) => {
-  if (!isOpen) return null;
+  // Função para converter a data para o formato ISO
+  const convertToISODate = (dateString: string): string => {
+    console.log('Data recebida:', dateString); // Log para depuração
 
-  const formattedDate = format(new Date(date), 'dd/MM/yyyy');
+    // Se a data já estiver no formato ISO (yyyy-MM-dd), retorne diretamente
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+
+    // Se a data estiver no formato dd/MM/yyyy, converta para yyyy-MM-dd
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      const [day, month, year] = dateString.split('/');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Se a data estiver em outro formato, tente usar new Date
+    const parsedDate = new Date(dateString);
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate.toISOString().split('T')[0]; // Retorna no formato yyyy-MM-dd
+    }
+
+    // Se não for possível converter, retorne uma string vazia
+    console.error('Formato de data não suportado:', dateString);
+    return '';
+  };
+
+  // Converter a data para o formato ISO
+  const isoDate = convertToISODate(date);
+
+  // Validar e formatar a data
+  const formattedDate = isoDate && isValid(parseISO(isoDate))
+    ? format(parseISO(isoDate), 'dd/MM/yyyy', { locale: ptBR })
+    : 'Data inválida'; // Fallback para caso a data seja inválida
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100]">

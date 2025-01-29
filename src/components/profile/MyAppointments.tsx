@@ -88,8 +88,11 @@ const MyAppointments = () => {
   };
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const [year, month, day] = date.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day); // Mês é zero-indexado
+    return format(parsedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
+  
 
   if (loading) {
     return (

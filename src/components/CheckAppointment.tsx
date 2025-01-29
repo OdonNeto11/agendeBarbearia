@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+/*import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { format, addDays } from 'date-fns';
 
@@ -60,3 +60,4 @@ const CheckAppointment = () => {
 };
 
 export default CheckAppointment;
+*/

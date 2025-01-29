@@ -47,7 +47,6 @@ const EditAppointmentModal = ({
   const [services, setServices] = useState<Service[]>([]);
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     service: '',
@@ -117,11 +116,12 @@ const EditAppointmentModal = ({
           .select('start_time, end_time, appointment_date')
           .eq('barber_id', formData.barber)
           .eq('appointment_date', formData.date)
-          .eq('status', 'pending')
+          .eq('status', 'confirmed') // Alterado para 'confirmed' para manter consistência com o Booking
           .neq('id', appointment.id);
 
         if (error) throw error;
         setAppointments(data || []);
+        console.log('Agendamentos encontrados:', data); // Depuração
       } catch (error) {
         console.error('Erro ao buscar agendamentos:', error);
       }
@@ -130,24 +130,27 @@ const EditAppointmentModal = ({
     fetchAppointments();
   }, [formData.barber, formData.date, appointment.id]);
 
+  // Função isTimeSlotAvailable copiada do Booking
   const isTimeSlotAvailable = (time: string): boolean => {
-    if (!selectedService) return false;
+    if (!appointment.service) return false;
 
     const [hours, minutes] = time.split(':').map(Number);
-    const slotStart = hours * 60 + minutes;
-    const slotEnd = slotStart + selectedService.duration;
+    const slotStart = hours * 60 + minutes; // Horário de início em minutos
+    const slotEnd = slotStart + appointment.service.duration; // Horário de término em minutos
 
-    return !appointments.some(appointment => {
+    // Verifica se o horário conflita com os agendamentos existentes
+    return !appointments.some((appointment) => {
       const [appStartHours, appStartMinutes] = appointment.start_time.split(':').map(Number);
       const [appEndHours, appEndMinutes] = appointment.end_time.split(':').map(Number);
-      
-      const appointmentStart = appStartHours * 60 + appStartMinutes;
-      const appointmentEnd = appEndHours * 60 + appEndMinutes;
 
+      const appointmentStart = appStartHours * 60 + appStartMinutes; // Início do agendamento em minutos
+      const appointmentEnd = appEndHours * 60 + appEndMinutes; // Término do agendamento em minutos
+
+      // Verifica se há sobreposição de horários
       return (
-        (slotStart >= appointmentStart && slotStart < appointmentEnd) ||
-        (slotEnd > appointmentStart && slotEnd <= appointmentEnd) ||
-        (slotStart <= appointmentStart && slotEnd >= appointmentEnd)
+        (slotStart >= appointmentStart && slotStart < appointmentEnd) || // Início do slot dentro do agendamento
+        (slotEnd > appointmentStart && slotEnd <= appointmentEnd) || // Término do slot dentro do agendamento
+        (slotStart <= appointmentStart && slotEnd >= appointmentEnd) // Slot cobre todo o agendamento
       );
     });
   };
@@ -283,32 +286,39 @@ const EditAppointmentModal = ({
               </div>
 
               {formData.date && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Novo Horário *</label>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                    {getAllTimeSlots().map((time) => {
-                      const isAvailable = isTimeSlotAvailable(time);
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          disabled={!isAvailable}
-                          className={`p-2 rounded-md text-center transition-colors ${
-                            formData.time === time
-                              ? 'bg-amber-500 text-black font-medium'
-                              : isAvailable
-                              ? 'bg-zinc-800 hover:bg-zinc-700'
-                              : 'bg-zinc-900 text-zinc-600 cursor-not-allowed opacity-50'
-                          }`}
-                          onClick={() => isAvailable && setFormData({ ...formData, time: time })}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+  <div>
+    <label className="block text-sm font-medium mb-2">Novo Horário *</label>
+    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+      {getAllTimeSlots().map((time) => {
+        const isAvailable = isTimeSlotAvailable(time);
+        console.log(`Horário: ${time}, Disponível: ${isAvailable}`); // Depuração
+
+        // Renderiza o botão apenas se o horário estiver disponível
+        return isAvailable ? (
+          <button
+            key={time}
+            type="button"
+            className={
+              formData.time === time
+                ? 'bg-amber-500 text-black font-medium' // Estilo para horário selecionado
+                : 'bg-zinc-800 hover:bg-zinc-700' // Estilo para horário disponível
+            }
+            onClick={() => setFormData({ ...formData, time: time })}
+          >
+            {time}
+          </button>
+        ) : (
+          <div
+            key={time}
+            className="bg-zinc-900 text-zinc-600 opacity-50 p-2 rounded-md text-center cursor-not-allowed"
+          >
+            {time}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
 
               <div className="flex justify-end space-x-3 pt-6">
                 <button
